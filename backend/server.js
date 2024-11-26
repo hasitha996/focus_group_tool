@@ -28,9 +28,11 @@ app.get("/", (req, res) => {
 // Ensure these paths and imports match the correct locations
 const authRoutes = require("./app/routes/auth.routes");
 const roomRoutes = require("./app/routes/room.routes");
+const liveKitRoutes = require("./app/routes/livekit.routes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomRoutes);
+app.use("/api/livekit", liveKitRoutes);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
