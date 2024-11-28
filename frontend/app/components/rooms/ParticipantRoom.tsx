@@ -5,10 +5,12 @@ import {
   ParticipantTile,
   RoomAudioRenderer,
   ControlBar,
-  useTracks
+  useTracks,
+  ParticipantName 
 } from "@livekit/components-react";
 import { useEffect, useState } from "react";
 import { Track, Room, Participant, RoomConnectOptions } from "livekit-client";
+
 import { getAccessUser } from "@/app/utils/apiClient";
 
 interface GenRoomProps {
@@ -47,6 +49,8 @@ const ParticipantRoom: React.FC<GenRoomProps> = ({ roomId, roomName, uRole }) =>
   };
 
   const toggleMuteAll = () => {
+   
+      console.log(ParticipantName);
     if (!room) return;
   
     room.participants.forEach((participant: Participant) => {
