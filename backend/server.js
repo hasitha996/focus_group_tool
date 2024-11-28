@@ -16,10 +16,11 @@ app.use(express.urlencoded({ extended: true }));
 const db = require("./app/models");
 const Role = db.role;
 
-db.sequelize.sync({ force: true }).then(() => {
-  console.log("Database synchronized with { force: true }");
+db.sequelize.sync({ alter: true }).then(() => {
+  console.log("Database synchronized with alter: true.");
   initializeRoles();
 });
+
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to the backend application." });
@@ -40,14 +41,23 @@ app.listen(PORT, () => {
 });
 
 function initializeRoles() {
-  Role.bulkCreate([
-    { id: 1, name: "participant" },
-    { id: 2, name: "moderator" },
-    { id: 3, name: "observer" },
-    { id: 4, name: "admin" }
-  ]).then(() => {
-    console.log("Roles initialized.");
+  Role.findAll().then(existingRoles => {
+    if (existingRoles.length === 0) {
+      Role.bulkCreate([
+        { id: 1, name: "participant" },
+        { id: 2, name: "moderator" },
+        { id: 3, name: "observer" },
+        { id: 4, name: "admin" }
+      ]).then(() => {
+        console.log("Roles initialized.");
+      }).catch(error => {
+        console.error("Error initializing roles:", error);
+      });
+    } else {
+      
+    }
   }).catch(error => {
-    console.error("Error initializing roles:", error);
+    console.error("Error checking existing roles:", error);
   });
 }
+

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { signin } = require("../controllers/auth.controller");
+const { authJwt } = require("../middleware");
+const { signin,getUserList } = require("../controllers/auth.controller");
 
 router.use((req, res, next) => {
   res.header(
@@ -11,5 +12,7 @@ router.use((req, res, next) => {
 });
 
 router.get("/signin", signin);
+
+router.get('/users',[authJwt.verifyToken], getUserList);
 
 module.exports = router;

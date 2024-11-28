@@ -33,6 +33,7 @@ exports.signin = async (req, res, next) => {
         name,
         email,
         image: picture,
+        user_role_id:1
       });
     }
 
@@ -72,3 +73,25 @@ exports.signin = async (req, res, next) => {
     });
   }
 };
+
+exports.getUserList = async (req, res, next) => {
+  try {
+    // Fetch all users from the database
+    const users = await User.findAll({
+      attributes: ['id', 'name', 'email', 'image', 'user_role_id'],
+      order: [['createdAt', 'DESC']], 
+    });
+
+  
+    res.status(200).json({
+      message: 'User list fetched successfully',
+      users,
+    });
+  } catch (err) {
+    console.error("Error fetching user list:", err);
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+

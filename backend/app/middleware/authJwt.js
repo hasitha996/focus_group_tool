@@ -13,7 +13,7 @@ verifyToken = (req, res, next) => {
   }
 
   jwt.verify(token,
-            config.secret,
+             process.env.JWT_SECRET,
             (err, decoded) => {
               if (err) {
                 return res.status(401).send({
@@ -21,6 +21,7 @@ verifyToken = (req, res, next) => {
                 });
               }
               req.userId = decoded.id;
+              console.log(decoded.id);
               next();
             });
 };

@@ -14,6 +14,10 @@ module.exports = (sequelize, Sequelize) => {
       },
       allowNull: false,
     },
+    roomUserRoleId: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+    },
     allocatedAt: {
       type: Sequelize.DATE,
       defaultValue: Sequelize.NOW,

@@ -27,6 +27,7 @@ export const googleAuth = async (code) => {
             accessToken: token,
             email: data.user.email,
             id: data.user.id,
+            name: data.user.name,
             role_id: data.user.role_id,
         };
 
