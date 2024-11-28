@@ -5,11 +5,11 @@ import {
   ParticipantTile,
   RoomAudioRenderer,
   ControlBar,
-  useTracks,
+  useTracks
 } from "@livekit/components-react";
 import { useEffect, useState } from "react";
-import { Track, Room ,Participant} from "livekit-client";
-import { getAccessUser  } from "@/app/utils/apiClient";
+import { Track, Room, Participant, RoomConnectOptions } from "livekit-client";
+import { getAccessUser } from "@/app/utils/apiClient";
 
 interface GenRoomProps {
   roomId: string;
@@ -21,10 +21,10 @@ const ParticipantRoom: React.FC<GenRoomProps> = ({ roomId, roomName, uRole }) =>
   const [token, setToken] = useState<string>("");
   const [room, setRoom] = useState<Room | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(false);
-  const userData = getAccessUser ();
+  const userData = getAccessUser();
 
   if (!userData) {
-    throw new Error("User  data is missing or invalid");
+    throw new Error("User data is missing or invalid");
   }
 
   const username = userData.name;
@@ -47,22 +47,17 @@ const ParticipantRoom: React.FC<GenRoomProps> = ({ roomId, roomName, uRole }) =>
   };
 
   const toggleMuteAll = () => {
-    console.log(Participant);
-    if (room) {
-      const localParticipant = room.localParticipant;
-      const currentlyMuted = isMuted;
-
-      // Mute or unmute all audio tracks
-      localParticipant.audioTracks.forEach((publication) => {
-        const track = publication.track;
-        if (track) {
-          currentlyMuted ? track.unmute() : track.mute();
+    if (!room) return;
+  
+    room.participants.forEach((participant: Participant) => {
+      participant.audioTracks.forEach((trackPub) => {
+        if (trackPub.track) {
+          isMuted ? trackPub.track.unmute() : trackPub.track.mute();
         }
       });
-
-      // Update the state
-      setIsMuted(!currentlyMuted);
-    }
+    });
+  
+    setIsMuted(!isMuted);
   };
 
   if (token === "") {
@@ -74,7 +69,7 @@ const ParticipantRoom: React.FC<GenRoomProps> = ({ roomId, roomName, uRole }) =>
         }}
         className="flex flex-col justify-center items-center min-h-screen"
       >
-        <div className="mb-4">
+        <div className="mb-4 w-full max-w-sm">
           <label htmlFor="roomId" className="block text-gray-700">
             Room:
           </label>
@@ -83,11 +78,11 @@ const ParticipantRoom: React.FC<GenRoomProps> = ({ roomId, roomName, uRole }) =>
             type="text"
             placeholder="Room"
             value={roomId}
-            className="ring-1 ring-gray-300 p-2 mt-1"
+            className="ring-1 ring-gray-300 p-2 mt-1 w-full"
             readOnly
           />
         </div>
-        <div className="mb-4">
+        <div className="mb-4 w-full max-w-sm">
           <label htmlFor="username" className="block text-gray-700">
             Name:
           </label>
@@ -96,13 +91,13 @@ const ParticipantRoom: React.FC<GenRoomProps> = ({ roomId, roomName, uRole }) =>
             type="text"
             placeholder="Name"
             value={username}
-            className="ring-1 ring-gray-300 p-2 mt-1"
+            className="ring-1 ring-gray-300 p-2 mt-1 w-full"
             readOnly
           />
         </div>
         <button
           type="submit"
-          className="p-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+          className="p-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors w-full max-w-sm"
         >
           Join
         </button>
@@ -111,33 +106,62 @@ const ParticipantRoom: React.FC<GenRoomProps> = ({ roomId, roomName, uRole }) =>
   }
 
   return (
-    <>
-      <LiveKitRoom
-        video={true}
-        audio={true}
-        token={token}
-        serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
-        onConnected={(roomInstance) => {
-          setRoom(roomInstance);
-          console.log("Room connected:", roomInstance);
-        }}
-        onDisconnected={() => setToken("")}
-        data-lk-theme="default"
-        style={{ height: "100dvh", position: "relative" }}
-      >
-        <MyVideoConference />
-        <RoomAudioRenderer />
-        <ControlBar />
-        <div className="absolute top-4 right-4 z-10">
+    <LiveKitRoom
+      video={true}
+      audio={true}
+      token={token}
+      serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+      onConnected={(roomInstance) => {
+        setRoom(roomInstance);
+        console.log("Room connected:", roomInstance);
+      }}
+      onDisconnected={() => setToken("")}
+      data-lk-theme="default"
+      style={{
+        height: "100vh", // Full screen height
+        position: "relative",
+        overflow: "hidden", // Prevent overflow
+      }}
+    >
+      {uRole === "admin" && <AdminControls room={room} />}
+      <MyVideoConference />
+      <RoomAudioRenderer />
+      <ControlBar />
+
+      <div className="absolute top-4 right-4 z-10">
+        {(uRole === 'admin' || uRole === 'moderator') && (
           <button
             onClick={toggleMuteAll}
             className={`p-2 ${isMuted ? "bg-red-500" : "bg-green-500"} text-white rounded-md`}
           >
             {isMuted ? "Unmute All" : "Mute All"}
           </button>
-        </div>
-      </LiveKitRoom>
-    </>
+        )}
+      </div>
+    </LiveKitRoom>
+  );
+};
+
+const AdminControls: React.FC<{ room: Room | null }> = ({ room }) => {
+  // if (!room) return null;
+
+  const endRoom = () => {
+    if (room) {
+      room.disconnect();
+      console.log('Room ended by admin');
+    }
+  };
+
+  return (
+    <div className="admin-controls absolute  bottom-3 right-4 z-10">
+      <button
+        disabled={!room}
+        onClick={endRoom}
+        className="bg-red-500 p-2 text-white rounded-md"
+      >
+        End Room
+      </button>
+    </div>
   );
 };
 
@@ -147,11 +171,17 @@ const MyVideoConference: React.FC = () => {
       { source: Track.Source.Camera, withPlaceholder: true },
       { source: Track.Source.ScreenShare, withPlaceholder: false },
     ],
-    { onlySubscribed: false }
+    // { onlySubscribed: false }
   );
 
   return (
-    <GridLayout tracks={tracks} style={{ height: 'calc(100vh - var(--lk-control-bar-height))' }}>
+    <GridLayout
+      tracks={tracks}
+      style={{
+        height: 'calc(100vh - var(--lk-control-bar-height))', // Adjust height to fit screen
+        overflow: 'hidden', // Ensure no overflow
+      }}
+    >
       <ParticipantTile />
     </GridLayout>
   );

@@ -1,9 +1,9 @@
-// app/api/delete-room/route.ts
+// app/api/delete-room/route.js
 import { NextResponse } from 'next/server';
 import { RoomServiceClient } from 'livekit-server-sdk';
 
-export async function DELETE(request: Request) {
-  const { roomId } = await request.json(); // Get roomId from the request body
+export async function DELETE(request) {
+  const { roomId } = await request.json();
 
   if (!roomId) {
     return NextResponse.json({ error: 'Room ID is required' }, { status: 400 });
@@ -16,7 +16,7 @@ export async function DELETE(request: Request) {
 
     // Initialize RoomServiceClient with LiveKit credentials
     const roomService = new RoomServiceClient(apiUrl, apiKey, apiSecret);
-    await roomService.deleteRoom(roomId); // Delete room by ID
+    await roomService.deleteRoom(roomId);
 
     return NextResponse.json({ success: true, message: 'Room deleted successfully' });
   } catch (error) {

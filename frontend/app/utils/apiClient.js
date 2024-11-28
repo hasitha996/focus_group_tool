@@ -10,7 +10,7 @@ export  const getAccessUser = () => {
         process.env.NEXT_PUBLIC_ENCRYPTION_KEY || "default_key"
       );
       const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-      return decryptedData; // Extract accessToken
+      return decryptedData; 
     } catch (error) {
       console.error("Failed to decrypt user data:", error);
       return null;

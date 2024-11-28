@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "../../components/navbar/Navbar";
 import notifications from '../../components/alarts/alerts';
 import { allocateToRoom, createNewRoom, fetchAllocatedRooms, deleteRoomwithUsers } from "../api/dasboard/route";
+import { getAccessUser } from "@/app/utils/apiClient";
 
 
 const Dashboard = () => {
@@ -22,6 +23,14 @@ const Dashboard = () => {
   const [inviteSuccess, setInviteSuccess] = useState(false); // Track invite success
   const [roomLink, setRoomLink] = useState(""); // Store room link
   const router = useRouter();
+  const userData = getAccessUser();
+
+  console.log(userData);
+  if (!userData) {
+    throw new Error("User  data is missing or invalid");
+  }
+
+  const AuthUserId = userData.id;
 
   useEffect(() => {
     const loadRoomsAndUsers = async () => {
@@ -81,7 +90,7 @@ const Dashboard = () => {
 
         // Step 3: Send the email invitation with the link to the room
         const emailResponse = await sendInviteEmail(selectedUserEmail, roomLink);
-        if (emailResponse.success) {
+        if (emailResponse) {
           notifications.success("Invitation email sent successfully!");
         } else {
           notifications.error("Failed to send invitation email");
@@ -106,19 +115,21 @@ const Dashboard = () => {
         },
         body: JSON.stringify({ userEmail, roomLink }),
       });
-  
-      if (!response.success) {
+
+
+      if (!response) {
         const result = await response.json();
         console.error('Error sending email:', result.message);
         return;
       }
       const result = await response.json();
-  
+      return true;
+
     } catch (error) {
       console.error('Failed to send email:', error);
     }
   };
-  
+
 
 
 
@@ -154,7 +165,7 @@ const Dashboard = () => {
         setRooms((prevRooms) => prevRooms.filter((room) => room.roomId !== roomId));
 
 
-        const response = await fetch('/api/delete-room', {
+        const response = await fetch('/api/room/delete-room', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -165,7 +176,7 @@ const Dashboard = () => {
         if (response.ok) {
           const disconnectResponse = await response.json();
 
-          if (disconnectResponse.success) {
+          if (disconnectResponse) {
             notifications.success("All users disconnected successfully");
           } else {
             notifications.warning("Room deleted, but some users may not have been disconnected.");
@@ -195,13 +206,16 @@ const Dashboard = () => {
         </h1>
 
         <div className="flex justify-center mb-8">
-          <button
-            onClick={() => setShowModal(true)}
-            disabled={loading}
-            className={`px-8 py-4 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition duration-300 transform ${loading ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}`}
-          >
-            {loading ? "Creating Room..." : "Create New Room"}
-          </button>
+          {AuthUserId == 1 && (
+            <button
+              onClick={() => setShowModal(true)}
+              disabled={loading}
+              className={`px-8 py-4 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition duration-300 transform ${loading ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}`}
+            >
+              {loading ? "Creating Room..." : "Create New Room"}
+            </button>
+          )}
+
         </div>
 
         {showModal && (
